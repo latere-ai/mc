@@ -101,18 +101,21 @@ jobs:
         env:
           DOCKER_BUILD_RECORD_RETENTION_DAYS: 7
 
+      # Each platform runs by its own manifest digest: the local image
+      # store refuses one index digest pulled for two platforms.
       - name: Check the pushed platforms
         env:
           DIGEST: ${{ steps.push.outputs.digest }}
         run: |
           set -eu
-          platforms=$(docker buildx imagetools inspect "$IMAGE@$DIGEST" --format '{{json .Manifest}}' |
-            jq -r '[.manifests[].platform | select(.os != "unknown") | "\(.os)/\(.architecture)"] | sort | join(" ")')
+          docker buildx imagetools inspect "$IMAGE@$DIGEST" --format '{{json .Manifest}}' > index.json
+          platforms=$(jq -r '[.manifests[].platform | select(.os != "unknown") | "\(.os)/\(.architecture)"] | sort | join(" ")' index.json)
           test "$platforms" = "linux/amd64 linux/arm64" || { echo "::error::platforms: $platforms"; exit 1; }
-          for platform in linux/amd64 linux/arm64; do
-            out=$(docker run --rm --pull always --platform "$platform" "$IMAGE@$DIGEST" --version)
-            echo "$platform: $out"
-            case $out in *"mc version $TAG "*) ;; *) echo "::error::unexpected version on $platform"; exit 1 ;; esac
+          for arch in amd64 arm64; do
+            child=$(jq -r --arg arch "$arch" '.manifests[] | select(.platform.os == "linux" and .platform.architecture == $arch) | .digest' index.json)
+            out=$(docker run --rm --platform "linux/$arch" "$IMAGE@$child" --version)
+            echo "linux/$arch ($child): $out"
+            case $out in *"mc version $TAG "*) ;; *) echo "::error::unexpected version on linux/$arch"; exit 1 ;; esac
           done
 
       - uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
