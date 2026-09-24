@@ -1,3 +1,42 @@
+# MinIO Client, maintained fork
+
+This repository is [latere-ai/mc](https://github.com/latere-ai/mc), a
+maintained fork of the MinIO Client (`mc`) from the archived MinIO community
+edition, [minio/mc](https://github.com/minio/mc). It is not affiliated with or
+endorsed by MinIO, Inc.
+
+- **Why:** upstream archived the community repositories, stopped serving
+  community binaries, and withdrew the community container images. MinIO's
+  current distribution, AIStor, requires a license key for any S3 operation.
+  This fork, with its server counterpart
+  [latere-ai/minio](https://github.com/latere-ai/minio), keeps an
+  account-free S3 client available for test stacks, CI, quickstarts and local
+  development.
+- **Scope:** dependencies, the Go toolchain and security fixes are kept
+  current. New features are out of scope. Commands, configuration and the
+  module path `github.com/minio/mc` stay upstream's.
+- **Images:** `ghcr.io/latere-ai/mc:<release>` for linux/amd64 and
+  linux/arm64, on Alpine so init steps can run `mc` through `/bin/sh -c`.
+  Pin by digest.
+- **Releases:** a `RELEASE.YYYY-MM-DDTHH-MM-SSZ` tag on a `master` commit
+  runs [the release workflow](.github/workflows/release.yml). It builds with
+  the version ldflags of upstream's release build, so `mc --version` prints
+  the release, smoke tests the image, pushes both platforms with SBOM and
+  build provenance attestations, and creates a GitHub release. Every push
+  runs build, vet, unit tests and govulncheck; a weekly govulncheck opens an
+  issue on findings.
+- **Backports:** [pgsty/mc](https://github.com/pgsty/mc), the client of the
+  SILO community fork, is the reference for fixes made after upstream was
+  archived. [docs/backports.md](docs/backports.md) records each change
+  considered and its status.
+- **Security:** report vulnerabilities as described in
+  [SECURITY.md](SECURITY.md).
+- **License:** GNU AGPL v3, as upstream ([LICENSE](LICENSE)).
+
+The upstream README follows.
+
+---
+
 # MinIO Client Quickstart Guide
 [![Slack](https://slack.min.io/slack?type=svg)](https://slack.min.io) [![Go Report Card](https://goreportcard.com/badge/minio/mc)](https://goreportcard.com/report/minio/mc) [![Docker Pulls](https://img.shields.io/docker/pulls/minio/mc.svg?maxAge=604800)](https://hub.docker.com/r/minio/mc/) [![license](https://img.shields.io/badge/license-AGPL%20V3-blue)](https://github.com/minio/mc/blob/master/LICENSE)
 
